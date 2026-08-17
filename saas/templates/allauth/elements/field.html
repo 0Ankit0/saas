@@ -1,0 +1,58 @@
+
+{% load allauth %}
+{% load crispy_forms_tags %}
+
+{% if attrs.type == "textarea" %}
+  <div class="mb-4 space-y-2">
+    <c-label for="{{ attrs.id }}">
+        {% slot label %}
+      {% endslot %}
+    </c-label>
+    <c-textarea {% if attrs.required %}required{% endif %}
+                {% if attrs.rows %}rows="{{ attrs.rows }}"{% endif %}
+                {% if attrs.disabled %}disabled{% endif %}
+                {% if attrs.readonly %}readonly{% endif %}
+                {% if attrs.checked %}checked{% endif %}
+                {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+                {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+                {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}>{% slot value %}{% endslot %}</c-textarea>
+  </div>
+{% elif attrs.type == "radio" %}
+  <div class="mb-4 flex items-start gap-2">
+    <input {% if attrs.required %}required{% endif %}
+           {% if attrs.disabled %}disabled{% endif %}
+           {% if attrs.readonly %}readonly{% endif %}
+           {% if attrs.checked %}checked{% endif %}
+           {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+           {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+           {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}
+           {% if attrs.autocomplete %}autocomplete="{{ attrs.autocomplete }}"{% endif %}
+           value="{{ attrs.value|default_if_none:"" }}"
+           type="{{ attrs.type }}"
+           class="mt-1 size-4 rounded border-input" />
+    <c-label for="{{ attrs.id }}">
+      {% slot label %}
+      {% endslot %}
+    </c-label>
+  </div>
+{% else %}
+  <div class="mb-4 space-y-2">
+    <c-label for="{{ attrs.id }}">
+      {% slot label %}
+      {% endslot %}
+    </c-label>
+    <c-input {% if attrs.required %}required{% endif %}
+             {% if attrs.disabled %}disabled{% endif %}
+             {% if attrs.readonly %}readonly{% endif %}
+             {% if attrs.checked %}checked{% endif %}
+             {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+             {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+             {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}
+             {% if attrs.autocomplete %}autocomplete="{{ attrs.autocomplete }}"{% endif %}
+             value="{{ attrs.value|default_if_none:"" }}"
+             type="{{ attrs.type }}" />
+  </div>
+{% endif %}
+{% if slots.help_text %}
+  <div class="-mt-2 mb-4 text-sm text-muted-foreground">{% slot help_text %}{% endslot %}</div>
+{% endif %}

@@ -1,0 +1,26 @@
+
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+  {{ user.email }}
+{% endblock title %}
+
+{% block content %}
+  <div class="py-6">
+    <c-card class="mx-auto w-full max-w-2xl">
+      <c-card.header>
+        <c-card.title>{{ user.email }}</c-card.title>
+        <c-card.description>Update your profile details.</c-card.description>
+      </c-card.header>
+      <c-card.content>
+        <form method="post" action="{% url 'users:update' %}" class="space-y-4">
+          {% csrf_token %}
+          {{ form|crispy }}
+          <c-button type="submit">Update</c-button>
+        </form>
+      </c-card.content>
+    </c-card>
+  </div>
+{% endblock content %}

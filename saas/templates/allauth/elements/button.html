@@ -1,0 +1,23 @@
+
+{% load allauth %}
+
+{% if attrs.href %}
+  <a href="{{ attrs.href }}">
+{% endif %}
+<c-button
+  {% if 'secondary' in attrs.tags %}variant="secondary"
+  {% elif 'danger' in attrs.tags %}variant="destructive"
+  {% elif 'warning' in attrs.tags %}variant="outline"
+  {% elif attrs.href %}variant="link"
+  {% else %}variant="default"{% endif %}
+  {% if attrs.form %}form="{{ attrs.form }}"{% endif %}
+  {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+  {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+  {% if attrs.type %}type="{{ attrs.type }}"{% endif %}
+>
+  {% slot %}
+  {% endslot %}
+</c-button>
+{% if attrs.href %}
+  </a>
+{% endif %}

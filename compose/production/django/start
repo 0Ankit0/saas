@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+if [ "${DJANGO_RUN_MIGRATIONS:-False}" = "True" ]; then
+  python /app/manage.py migrate_schemas --shared
+  python /app/manage.py migrate_schemas
+fi
+
+python /app/manage.py tailwind build
+python /app/manage.py collectstatic --noinput
+
+compress_enabled() {
+python << END
+import sys
+
+from environ import Env
+
+env = Env(COMPRESS_ENABLED=(bool, True))
+if env('COMPRESS_ENABLED'):
+    sys.exit(0)
+else:
+    sys.exit(1)
+
+END
+}
+
+if compress_enabled; then
+  # NOTE this command will fail if django-compressor is disabled
+  python /app/manage.py compress
+fi
+exec gunicorn config.asgi --bind 0.0.0.0:5000 --chdir=/app -k uvicorn_worker.UvicornWorker

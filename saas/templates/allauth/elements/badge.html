@@ -1,0 +1,12 @@
+
+{% load allauth %}
+
+<c-badge
+  {% if 'success' in attrs.tags %}variant="secondary"
+  {% elif 'warning' in attrs.tags %}variant="outline"
+  {% elif 'danger' in attrs.tags %}variant="destructive"
+  {% else %}variant="default"{% endif %}
+>
+  {% slot %}
+{% endslot %}
+</c-badge>

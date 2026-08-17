@@ -1,0 +1,103 @@
+volumes:
+  saas_local_postgres_data: {}
+  saas_local_postgres_data_backups: {}
+  saas_local_python_venv: {}
+  saas_local_redis_data: {}
+
+services:
+  django: &django
+    build:
+      context: .
+      dockerfile: ./compose/local/django/Dockerfile
+    image: saas_local_django
+    container_name: saas_local_django
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    volumes:
+      - saas_local_python_venv:/app/.venv
+      - .:/app:z
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+    ports:
+      - '8000:8000'
+    command: ["/bin/bash", "/app/compose/local/django/start"]
+
+  migrations:
+      <<: *django
+      image: saas_local_migrations
+      container_name: saas_local_migrations
+      depends_on:
+        postgres:
+          condition: service_healthy
+      ports: []
+      command: ["/bin/bash", "/app/compose/local/django/start-migrations"]
+
+  tailwind:
+    <<: *django
+    image: saas_local_tailwind
+    container_name: saas_local_tailwind
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    ports: []
+    command: ["/bin/bash", "/app/compose/local/django/start-tailwind"]
+
+  postgres:
+    build:
+      context: .
+      dockerfile: ./compose/production/postgres/Dockerfile
+    image: saas_production_postgres
+    container_name: saas_local_postgres
+    volumes:
+      - saas_local_postgres_data:/var/lib/postgresql/18/docker
+      - saas_local_postgres_data_backups:/backups
+    env_file:
+      - ./.envs/.local/.postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  mailpit:
+    image: docker.io/axllent/mailpit:latest
+    container_name: saas_local_mailpit
+    ports:
+      - "8025:8025"
+
+  redis:
+    image: docker.io/redis:7.2
+    container_name: saas_local_redis
+    volumes:
+      - saas_local_redis_data:/data
+
+  celeryworker:
+    <<: *django
+    image: saas_local_celeryworker
+    container_name: saas_local_celeryworker
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    ports: []
+    command: ["/bin/bash", "/app/compose/local/django/celery/worker/start"]
+
+  celerybeat:
+    <<: *django
+    image: saas_local_celerybeat
+    container_name: saas_local_celerybeat
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    ports: []
+    command: ["/bin/bash", "/app/compose/local/django/celery/beat/start"]
+
+  flower:
+    <<: *django
+    image: saas_local_flower
+    container_name: saas_local_flower
+    ports:
+      - '5555:5555'
+    command: /start-flower

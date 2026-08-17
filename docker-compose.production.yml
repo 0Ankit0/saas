@@ -1,0 +1,94 @@
+volumes:
+  production_postgres_data: {}
+  production_postgres_data_backups: {}
+  production_traefik: {}
+  
+  production_redis_data: {}
+  
+
+
+services:
+  django: &django
+    build:
+      context: .
+      dockerfile: ./compose/production/django/Dockerfile
+
+    image: saas_production_django
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - ./.envs/.production/.django
+      - ./.envs/.production/.postgres
+    command: ["/bin/bash", "/app/compose/production/django/start"]
+
+  migrations:
+      <<: *django
+      image: saas_production_migrations
+      container_name: saas_production_migrations
+      depends_on:
+        postgres:
+          condition: service_healthy
+      ports: []
+      command: ["/bin/bash", "/app/compose/production/django/start-migrations"]
+
+  tailwind:
+    <<: *django
+    image: saas_production_tailwind
+    container_name: saas_production_tailwind
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    ports: []
+    command: ["/bin/bash", "/app/compose/production/django/start-tailwind"]
+
+  postgres:
+    build:
+      context: .
+      dockerfile: ./compose/production/postgres/Dockerfile
+    image: saas_production_postgres
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/18/docker
+      - production_postgres_data_backups:/backups
+    env_file:
+      - ./.envs/.production/.postgres
+
+  traefik:
+    build:
+      context: .
+      dockerfile: ./compose/production/traefik/Dockerfile
+    image: saas_production_traefik
+    depends_on:
+      - django
+    volumes:
+      - production_traefik:/etc/traefik/acme
+    ports:
+      - '0.0.0.0:80:80'
+      - '0.0.0.0:443:443'
+      - '0.0.0.0:5555:5555'
+
+  redis:
+    image: docker.io/redis:7.2
+    
+    volumes:
+      - production_redis_data:/data
+    
+
+  celeryworker:
+    <<: *django
+    image: saas_production_celeryworker
+    command: ["/bin/bash", "/app/compose/production/django/celery/worker/start"]
+
+  celerybeat:
+    <<: *django
+    image: saas_production_celerybeat
+    command: ["/bin/bash", "/app/compose/production/django/celery/beat/start"]
+
+  awscli:
+    build:
+      context: .
+      dockerfile: ./compose/production/aws/Dockerfile
+    env_file:
+      - ./.envs/.production/.django
+    volumes:
+      - production_postgres_data_backups:/backups:z

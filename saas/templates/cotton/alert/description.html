@@ -1,0 +1,11 @@
+
+<div
+  class="text-sm [&_p]:leading-relaxed
+    {% if class %}
+        {{ class }}
+    {% endif %}
+  "
+  {{ attrs }}
+>
+  {{ slot }}
+</div>

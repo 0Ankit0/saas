@@ -1,0 +1,105 @@
+
+
+{% load static i18n compress %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title>
+      {% block title %}
+
+      saas
+
+    {% endblock title %}
+  </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+        content="A common django template" />
+  <meta name="author"
+        content="Ankit Poudyal" />
+  <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}" />
+  {% block css %}
+    <link href="{% static 'css/output.css' %}" rel="stylesheet" />
+    {% compress css %}
+      <link href="{% static 'css/project.css' %}" rel="stylesheet" />
+    {% endcompress %}
+  {% endblock css %}
+{# Placed at the top of the document so pages load faster with defer #}
+{% block javascript %}
+
+<script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  {% compress js %}
+    <script defer src="{% static 'js/project.js' %}"></script>
+  {% endcompress %}
+
+{% endblock javascript %}
+</head>
+<body class="min-h-screen bg-background text-foreground {% block bodyclass %}{% endblock bodyclass %}">
+  {% block body %}
+
+  <c-navbar brand="saas">
+
+    <c-slot name="nav">
+      <c-navbar.link href="{% url 'home' %}">Home</c-navbar.link>
+      <c-navbar.link href="{% url 'about' %}">About</c-navbar.link>
+      <c-navbar.link href="{% url 'components' %}">Components</c-navbar.link>
+    </c-slot>
+    <c-slot name="actions">
+      {% if request.user.is_authenticated %}
+        <c-navbar.link href="{% url 'users:detail' request.user.pk %}">{% translate "My Profile" %}</c-navbar.link>
+        <c-navbar.link href="{% url 'account_logout' %}">{% translate "Sign Out" %}</c-navbar.link>
+      {% else %}
+        {% if ACCOUNT_ALLOW_REGISTRATION %}
+          <c-navbar.link id="sign-up-link" href="{% url 'account_signup' %}">{% translate "Sign Up" %}</c-navbar.link>
+        {% endif %}
+        <c-navbar.link id="log-in-link" href="{% url 'account_login' %}">{% translate "Sign In" %}</c-navbar.link>
+      {% endif %}
+      <c-multi_menu label="Quick Links">
+        <c-multi_menu.section title="Project">
+          <c-multi_menu.item href="{% url 'home' %}">Home</c-multi_menu.item>
+          <c-multi_menu.item href="{% url 'about' %}">About</c-multi_menu.item>
+          <c-multi_menu.item href="{% url 'components' %}">Components</c-multi_menu.item>
+        </c-multi_menu.section>
+        <c-multi_menu.section title="Platform">
+          <c-multi_menu.item href="/admin/">Admin</c-multi_menu.item>
+          <c-multi_menu.item href="/api/docs/">API Docs</c-multi_menu.item>
+        </c-multi_menu.section>
+      </c-multi_menu>
+    </c-slot>
+  </c-navbar>
+  <div class="mx-auto w-full max-w-5xl px-4 py-6">
+    {% if messages %}
+      <div class="mb-6 grid gap-2">
+        {% for message in messages %}
+          <c-alert {% if message.tags == "error" %}variant="destructive"{% elif message.tags == "warning" %}variant="warning"{% elif message.tags == "success" %}variant="success"{% endif %}>
+            {{ message }}
+          </c-alert>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block main %}
+      {% block content %}
+        <p class="text-muted-foreground">Use this document as a way to quick start any new project.</p>
+      {% endblock content %}
+    {% endblock main %}
+  </div>
+
+  {% endblock body %}
+  {% block modal %}
+  {% endblock modal %}
+  {% block inline_javascript %}
+    {% comment %}
+    Script tags with only code, no src (defer by default). To run
+    with a "defer" so that you run inline code:
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        /* Run whatever you want */
+      });
+    </script>
+    {% endcomment %}
+  {% endblock inline_javascript %}
+</body>
+</html>

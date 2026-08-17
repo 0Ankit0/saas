@@ -1,0 +1,32 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+  User: {{ object.email }}
+{% endblock title %}
+
+{% block content %}
+  <div class="py-6">
+    <c-card class="mx-auto w-full max-w-2xl">
+      <c-card.header>
+        <c-card.title>{{ object.email }}</c-card.title>
+        {% if object.name %}
+          <c-card.description>{{ object.name }}</c-card.description>
+        {% endif %}
+      </c-card.header>
+      {% if object == request.user %}
+        <c-card.content class="flex flex-wrap gap-2">
+          <a href="{% url 'users:update' %}">
+            <c-button>My Info</c-button>
+          </a>
+          <a href="{% url 'account_email' %}">
+            <c-button variant="outline">E-Mail</c-button>
+          </a>
+          <a href="{% url 'mfa_index' %}">
+            <c-button variant="secondary">MFA</c-button>
+          </a>
+        </c-card.content>
+      {% endif %}
+    </c-card>
+  </div>
+{% endblock content %}
