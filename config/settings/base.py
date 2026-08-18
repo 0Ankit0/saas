@@ -122,6 +122,8 @@ THIRD_PARTY_SHARED_APPS = [
     "allauth.socialaccount",
     "corsheaders",
     "django_celery_beat",
+    "rest_framework.authtoken",
+
 ]
 
 THIRD_PARTY_TENANT_APPS = [
@@ -130,9 +132,15 @@ THIRD_PARTY_TENANT_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     "rest_framework",
-    "rest_framework.authtoken",
     "corsheaders",
     "drf_spectacular",
+
+    "dj_control_room_base",
+    "dj_redis_panel",
+    "dj_cache_panel",
+    "dj_urls_panel",
+    "dj_celery_panel",
+    "dj_signals_panel",
 ]
 
 LOCAL_SHARED_APPS = [
@@ -141,15 +149,7 @@ LOCAL_SHARED_APPS = [
 ]
 
 LOCAL_TENANT_APPS: list[str] = []
-THIRD_PARTY_SHARED_APPS += [
-    "dj_control_room_base",
-    "dj_redis_panel",
-    "dj_cache_panel",
-    "dj_urls_panel",
-    "dj_celery_panel",
-    "dj_signals_panel",
 
-]
 SHARED_APPS = DJANGO_APPS + THIRD_PARTY_SHARED_APPS + LOCAL_SHARED_APPS
 TENANT_APPS = DJANGO_APPS + THIRD_PARTY_TENANT_APPS + LOCAL_TENANT_APPS
 
@@ -404,6 +404,8 @@ ACCOUNT_FORMS = {"signup": "saas.users.forms.UserSignupForm"}
 SOCIALACCOUNT_ADAPTER = "saas.users.adapters.SocialAccountAdapter"
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
 SOCIALACCOUNT_FORMS = {"signup": "saas.users.forms.UserSocialSignupForm"}
+UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_CONFIRMATION_HMAC=True
 # django-compressor
 # ------------------------------------------------------------------------------
 # https://django-compressor.readthedocs.io/en/latest/quickstart/#installation
