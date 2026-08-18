@@ -1,6 +1,4 @@
-
 from typing import ClassVar
-
 from django.contrib.auth.models import AbstractUser
 from django.db.models import CharField
 from django.db.models import EmailField
@@ -9,9 +7,10 @@ from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill, Transpose
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from saas.users.managers import UserManager
 
-from .managers import UserManager
 from tenant_users.tenants.models import UserProfile
+
 class User(UserProfile):
     """
     Default custom user model for saas.

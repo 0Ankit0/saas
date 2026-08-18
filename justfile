@@ -37,6 +37,10 @@ logs *args:
 manage +args:
     @docker-compose run --rm django python ./manage.py {{args}}
 
+# exec: Execute docker service
+exec *args:
+    @docker-compose exec {{args}}
+
 # pytest: Run tests with pytest.
 pytest *args:
     @docker-compose run --rm django pytest {{args}}

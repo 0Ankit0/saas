@@ -10,3 +10,4 @@ class UsersConfig(AppConfig):
         """
         Override this method in subclasses to run code when Django starts.
         """
+        from saas.users import signals  # noqa: F401
