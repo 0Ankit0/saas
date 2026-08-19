@@ -40,6 +40,7 @@ urlpatterns = [
     # User management
     path("users/", include("saas.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    path("tenants/", include("saas.tenants.urls", namespace="tenants")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files

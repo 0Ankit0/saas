@@ -89,7 +89,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ------------------------------------------------------------------------------
 TENANT_MODEL = "tenants.Tenant"
 TENANT_DOMAIN_MODEL = "tenants.Domain"
-TENANT_USERS_DOMAIN = env("DJANGO_TENANT_USERS_DOMAIN", default="localhost")
+TENANT_USERS_DOMAIN = env("DJANGO_TENANT_USERS_DOMAIN", default="localhost:8000")
 PUBLIC_SCHEMA_URLCONF = "config.urls"
 
 # APPS
@@ -123,7 +123,7 @@ THIRD_PARTY_SHARED_APPS = [
     "corsheaders",
     "django_celery_beat",
     "rest_framework.authtoken",
-
+    "django_celery_results",
 ]
 
 THIRD_PARTY_TENANT_APPS = [
@@ -203,6 +203,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
     "django_tenants.middleware.main.TenantMainMiddleware",
+    "saas.contrib.middleware.PublicAdminOnlyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
