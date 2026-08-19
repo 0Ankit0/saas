@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Sign In" %}{% endblock %}
+
+{% block content %}
+<div class=" flex items-center justify-center bg-background">
+    <c-card class='w-[400px]'>
+        <c-card.header>
+            <c-card.title>{% trans "Sign In" %}</c-card.title>
+            <c-card.description>
+                {% trans "Please sign in with your email address and password." %}
+            </c-card.description>
+        </c-card.header>
+
+        <form method="POST" action="{{ app_path }}" id="login-form">
+            {% csrf_token %}
+
+            <c-card.content class='space-y-4'>
+
+                {% if form.non_field_errors %}
+                    <c-alert variant="destructive">
+                        <c-alert.description>
+                            {{ form.non_field_errors }}
+                        </c-alert.description>
+                    </c-alert>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                    <c-alert variant="destructive">
+                        <c-alert.description>
+                            {% blocktranslate trimmed %}
+                                You are authenticated as {{ username }},
+                                but are not authorized to access this page.
+                                Would you like to login to a different account?
+                            {% endblocktranslate %}
+                        </c-alert.description>
+                    </c-alert>
+                {% endif %}
+
+                <div class='space-y-2'>
+                    <c-label for="{{ form.username.id_for_label }}">
+                        {{ form.username.label }}
+                    </c-label>
+
+                    <c-input
+                        type="{{ form.username.field.widget.input_type }}"
+                        name="{{ form.username.name }}"
+                        id="{{ form.username.id_for_label }}"
+                        placeholder="Enter your email"
+                        value="{{ form.username.value|default:'' }}"
+                        {{ form.username.field.required|yesno:'required,' }}
+                        class="{{ form.username.errors|yesno:'border-destructive,' }}"
+                    />
+
+                    {% if form.username.errors %}
+                        <div class="text-destructive text-xs">
+                            {{ form.username.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class='space-y-2'>
+                    <c-label for="{{ form.password.id_for_label }}">
+                        {{ form.password.label }}
+                    </c-label>
+
+                    <c-input
+                        type="password"
+                        name="{{ form.password.name }}"
+                        id="{{ form.password.id_for_label }}"
+                        placeholder="Enter your password"
+                        {{ form.password.field.required|yesno:'required,' }}
+                        class="{{ form.password.errors|yesno:'border-destructive,' }}"
+                    />
+
+                    {% if form.password.errors %}
+                        <div class="text-destructive text-xs">
+                            {{ form.password.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <input
+                    type="hidden"
+                    name="next"
+                    value="{{ next }}"
+                />
+
+            </c-card.content>
+
+            <c-card.footer class='flex flex-col space-y-3'>
+
+                <c-button type="submit" class="w-full">
+                    {% trans "Sign In" %}
+                </c-button>
+
+                <div class="text-center text-sm text-muted-foreground">
+                    <a
+                        href="{% url 'account_reset_password' %}"
+                        class="text-primary hover:underline"
+                    >
+                        {% trans "Forgot Password?" %}
+                    </a>
+                </div>
+
+                <div class="text-center text-sm text-muted-foreground">
+                    {% trans "Don't have an account?" %}
+                    <a
+                        href="{% url 'account_signup' %}"
+                        class="text-primary hover:underline"
+                    >
+                        {% trans "Sign up" %}
+                    </a>
+                </div>
+
+            </c-card.footer>
+        </form>
+    </c-card>
+</div>
+{% endblock %}

@@ -446,9 +446,6 @@
   .min-h-\[60px\] {
     min-height: 60px;
   }
-  .min-h-\[70vh\] {
-    min-height: 70vh;
-  }
   .min-h-screen {
     min-height: 100vh;
   }
@@ -623,9 +620,6 @@
   }
   .items-start {
     align-items: flex-start;
-  }
-  .items-stretch {
-    align-items: stretch;
   }
   .justify-between {
     justify-content: space-between;
@@ -956,9 +950,6 @@
   }
   .no-underline {
     text-decoration-line: none;
-  }
-  .underline {
-    text-decoration-line: underline;
   }
   .underline-offset-4 {
     text-underline-offset: 4px;

@@ -1,5 +1,4 @@
-Hello {{ user.get_full_name|default:user.email }},
-
+Hello {{ email}}
 {{ invited_by }} has invited you to join {{ tenant.name }}.
 
 Accept the invitation:
