@@ -146,6 +146,7 @@ THIRD_PARTY_TENANT_APPS = [
 LOCAL_SHARED_APPS = [
     "saas.tenants",
     "saas.users",
+    "saas.billing",
 ]
 
 LOCAL_TENANT_APPS: list[str] = []
