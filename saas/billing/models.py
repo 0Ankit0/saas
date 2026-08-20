@@ -313,6 +313,15 @@ class Payment(models.Model):
     metadata = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def amount_decimal(self) -> Decimal:
+        return Decimal(self.amount) / Decimal("100")
+
+    @property
+    def amount_display(self) -> str:
+        return f"{self.amount_decimal:.2f} {self.currency.upper()}"
+    
     class Meta:
         ordering = ["-created_at"]
         constraints = [models.UniqueConstraint(fields=["provider", "provider_payment_id"], name="billing_payment_provider_id_unique")]
@@ -345,6 +354,23 @@ class Invoice(models.Model):
     metadata = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def amount_due_decimal(self) -> Decimal:
+        return Decimal(self.amount_due) / Decimal("100")
+
+    @property
+    def amount_due_display(self) -> str:
+        return f"{self.amount_due_decimal:.2f} {self.currency.upper()}"
+
+    @property
+    def amount_paid_decimal(self) -> Decimal:
+        return Decimal(self.amount_paid) / Decimal("100")
+
+    @property
+    def amount_paid_display(self) -> str:
+        return f"{self.amount_paid_decimal:.2f} {self.currency.upper()}"
+    
     class Meta:
         ordering = ["-created_at"]
         constraints = [models.UniqueConstraint(fields=["provider", "provider_invoice_id"], name="billing_invoice_provider_id_unique")]
