@@ -51,30 +51,30 @@ HASHID_SALT = env("HASHID_SALT", default="CHANGE_ME")
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
-if os.getenv("DATABASE_URL", default=None):
-    DATABASES = {"default": env.db("DATABASE_URL")}
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django_tenants.postgresql_backend",
-            "NAME": env("POSTGRES_DB"),
-            "USER": env("POSTGRES_USER"),
-            "PASSWORD": env("POSTGRES_PASSWORD"),
-            "HOST": env("POSTGRES_HOST"),
-            "PORT": env("POSTGRES_PORT", default="5432"),
-        }
+# if os.getenv("DATABASE_URL", default=None):
+#     DATABASES = {"default": env.db("DATABASE_URL")}
+# else:
+DATABASES = {
+    "default": {
+        "ENGINE": "django_tenants.postgresql_backend",
+        "NAME": env("POSTGRES_DB"),
+        "USER": env("POSTGRES_USER"),
+        "PASSWORD": env("POSTGRES_PASSWORD"),
+        "HOST": env("POSTGRES_HOST"),
+        "PORT": env("POSTGRES_PORT", default="5432"),
     }
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": env.str("POSTGRES_DB"),
-            "USER": env.str("POSTGRES_USER"),
-            "PASSWORD": env.str("POSTGRES_PASSWORD"),
-            "HOST": env.str("POSTGRES_HOST", default="postgres"),
-            "PORT": env.str("POSTGRES_PORT", default="5432"),
-        },
-    }
-DATABASES["default"]["ENGINE"] = "django_tenants.postgresql_backend"
+}
+    # DATABASES = {
+    #     "default": {
+    #         "ENGINE": "django.db.backends.postgresql",
+    #         "NAME": env.str("POSTGRES_DB"),
+    #         "USER": env.str("POSTGRES_USER"),
+    #         "PASSWORD": env.str("POSTGRES_PASSWORD"),
+    #         "HOST": env.str("POSTGRES_HOST", default="postgres"),
+    #         "PORT": env.str("POSTGRES_PORT", default="5432"),
+    #     },
+    # }
+# DATABASES["default"]["ENGINE"] = "django_tenants.postgresql_backend"
 DATABASE_ROUTERS = ("django_tenants.routers.TenantSyncRouter",)
 
 DATABASES["default"]["ATOMIC_REQUESTS"] = True

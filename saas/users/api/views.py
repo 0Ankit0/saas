@@ -13,7 +13,7 @@ from saas.contrib.views import HashIDModelViewSet
 from saas.contrib.utils import decode_hashid
 from saas.users.models import User
 
-from .serializers import UserSerializer
+from .serializers import GroupSerializer, PermissionSerializer, UserSerializer
 
 
 class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
@@ -48,3 +48,11 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
     def me(self, request):
         serializer = UserSerializer(request.user, context={"request": request})
         return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+class GroupViewSet(HashIDModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+
+class PermissionViewSet(HashIDModelViewSet):
+    queryset = Permission.objects.all()
+    serializer_class = PermissionSerializer

@@ -10,3 +10,19 @@ class UserSerializer(serializers.ModelSerializer[User]):
     class Meta:
         model = User
         fields = [ "id", "email", "is_active", "is_staff", "is_superuser"]
+        read_only_fields = ["id", "email", "is_active", "is_staff", "is_superuser"]
+
+class PermissionSerializer(serializers.ModelSerializer[Permission]):
+    id = HashIDField()
+    class Meta:
+        model = Permission
+        fields = ["id", "name", "content_type", "codename"]
+        read_only_fields = ["id"]
+
+class GroupSerializer(serializers.ModelSerializer[Group]):
+    id = HashIDField()
+    permissions = PermissionSerializer(many=True)
+    class Meta:
+        model = Group
+        fields = ["id", "name", "permissions"]
+        read_only_fields = ["id", "permissions"]
