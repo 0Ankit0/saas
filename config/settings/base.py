@@ -94,6 +94,10 @@ TENANT_DOMAIN_MODEL = "tenants.Domain"
 TENANT_USERS_DOMAIN = env("DJANGO_TENANT_USERS_DOMAIN", default="localhost:8000")
 PUBLIC_SCHEMA_URLCONF = "config.urls"
 
+TENANT_USERS_PERMS_QUERYSET = (
+    "tenant_users.permissions.utils.get_optimized_tenant_perms_queryset"
+)
+
 # APPS
 # ------------------------------------------------------------------------------
 DJANGO_APPS = [
@@ -126,15 +130,8 @@ THIRD_PARTY_SHARED_APPS = [
     "django_celery_beat",
     "rest_framework.authtoken",
     "django_celery_results",
-]
 
-THIRD_PARTY_TENANT_APPS = [
-    "tenant_users.permissions",
-    "django_cotton",
-    "crispy_forms",
-    "crispy_bootstrap5",
     "rest_framework",
-    "corsheaders",
     "drf_spectacular",
 
     "dj_control_room_base",
@@ -143,6 +140,10 @@ THIRD_PARTY_TENANT_APPS = [
     "dj_urls_panel",
     "dj_celery_panel",
     "dj_signals_panel",
+]
+
+THIRD_PARTY_TENANT_APPS = [
+    "tenant_users.permissions",
 ]
 
 LOCAL_SHARED_APPS = [
@@ -215,6 +216,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "tenant_users.tenants.middleware.TenantAccessMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
