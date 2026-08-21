@@ -12,6 +12,7 @@ CR_REGISTER_REDIS_PANEL=True
 CR_REGISTER_CACHE_PANEL=True
 CR_REGISTER_URLS_PANEL=True
 CR_REGISTER_CELERY_PANEL=True
+HASHID_SALT=saas
 # Redis
 # ------------------------------------------------------------------------------
 REDIS_URL=redis://redis:6379/0
