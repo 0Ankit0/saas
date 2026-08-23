@@ -48,7 +48,8 @@ MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
 # https://django-debug-toolbar.readthedocs.io/en/latest/configuration.html#debug-toolbar-config
 DEBUG_TOOLBAR_CONFIG = {
     "DISABLE_PANELS": [
-        "debug_toolbar.panels.redirects.RedirectsPanel",
+        # "debug_toolbar.panels.redirects.RedirectsPanel",
+        "debug_toolbar.panels.profiling.HistoryPanel",
         # Disable profiling panel due to an issue with Python 3.12+:
         # https://github.com/jazzband/django-debug-toolbar/issues/1875
         "debug_toolbar.panels.profiling.ProfilingPanel",

@@ -91,6 +91,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ------------------------------------------------------------------------------
 TENANT_MODEL = "tenants.Tenant"
 TENANT_DOMAIN_MODEL = "tenants.Domain"
+# https://docs.djangoproject.com/en/dev/ref/settings/#tenant-users-domain
 TENANT_USERS_DOMAIN = env("DJANGO_TENANT_USERS_DOMAIN", default="localhost:8000")
 PUBLIC_SCHEMA_URLCONF = "config.urls"
 
@@ -207,7 +208,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
     "django_tenants.middleware.main.TenantMainMiddleware",
-    "saas.contrib.middleware.PublicAdminOnlyMiddleware",
+    # "saas.contrib.middleware.PublicAdminOnlyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -463,5 +464,7 @@ UNFOLD = {
         },
     ]
 }
-# Your stuff...
 # ------------------------------------------------------------------------------
+# Stripe
+ENABLE_STRIPE = env.bool("ENABLE_STRIPE", default=False)
+STRIPE_API_KEY=env("STRIPE_API_KEY")
