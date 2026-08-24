@@ -14,7 +14,7 @@ SECRET_KEY = env(
     default="kpUkWWn8LMtTjRFronfAQl4VbvOblRCo7kxs2RvrzXwMBuNjMQyDGm1aYf2hGh11",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1", ".localhost"]  # noqa: S104
+ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1", ".localhost", "django", ".django"]  # noqa: S104
 
 # CACHES
 # ------------------------------------------------------------------------------
@@ -124,5 +124,40 @@ STORAGES = {
     },
 }
 
-# Your stuff...
+# logging
 # ------------------------------------------------------------------------------
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "formatters": {
+        "verbose": {
+            "format": (
+                "{asctime} {levelname} "
+                "{name} {message}"
+            ),
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+
+    "loggers": {
+        "saas.billing": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}

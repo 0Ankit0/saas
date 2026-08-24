@@ -392,6 +392,10 @@ CELERY_WORKER_SEND_TASK_EVENTS = True
 CELERY_TASK_SEND_SENT_EVENT = True
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#worker-hijack-root-logger
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+
 # django-allauth
 # ------------------------------------------------------------------------------
 ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
@@ -466,5 +470,20 @@ UNFOLD = {
 }
 # ------------------------------------------------------------------------------
 # Stripe
-ENABLE_STRIPE = env.bool("ENABLE_STRIPE", default=False)
-STRIPE_API_KEY=env("STRIPE_API_KEY")
+ENABLE_STRIPE = env.bool("ENABLE_STRIPE", default=True)
+STRIPE_API_KEY=env("STRIPE_API_KEY", default="sk_test_123")
+STRIPE_WEBHOOK_SECRET=env("STRIPE_WEBHOOK_SECRET", default="whsec_993071f4305f82136b251aea1810168054c49b9e7be7bf83854e1ea5cd10e378")
+STRIPE_PUBLISHABLE_KEY=env("STRIPE_PUBLISHABLE_KEY", default="pk_test_123")
+
+# Khalti
+# ------------------------------------------------------------------------------
+ENABLE_KHALTI = env.bool("ENABLE_KHALTI", default=False)
+KHALTI_SECRET_KEY=env("KHALTI_SECRET_KEY", default="test_secret_key_123")
+KHALTI_BASE_URL = env.str("KHALTI_BASE_URL", default="https://khalti.com/api/v2/payment/verify/")
+
+# Esewa
+# ------------------------------------------------------------------------------
+ENABLE_ESEWA = env.bool("ENABLE_ESEWA", default=True)
+ESEWA_PRODUCT_CODE=env.str("ESEWA_PRODUCT_CODE", default="EPAYTEST")
+ESEWA_SECRET_KEY=env("ESEWA_SECRET_KEY", default="8gBm/:&EnhH.1/q")
+ESEWA_BASE_URL = env.str("ESEWA_BASE_URL", default="https://uat.esewa.com.np/epay/main/v2/form")
