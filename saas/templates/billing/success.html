@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mx-auto max-w-xl py-16">
+  <c-card>
+    <c-card.header>
+      <c-card.title>Checkout submitted</c-card.title>
+      <c-card.description>Your billing provider is processing the payment.</c-card.description>
+    </c-card.header>
+    <c-card.content class="space-y-4 text-sm">
+      <p>Subscription state is updated from verified provider webhooks, not from this page.</p>
+      {% if session_id %}<p class="text-muted-foreground">Checkout session: {{ session_id }}</p>{% endif %}
+    </c-card.content>
+    <c-card.footer>
+      <a href="{% url 'billing:dashboard' %}"><c-button>Open billing</c-button></a>
+    </c-card.footer>
+  </c-card>
+</div>
+{% endblock content %}

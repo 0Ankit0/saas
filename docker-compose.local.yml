@@ -24,6 +24,15 @@ services:
       - '8000:8000'
     command: ["/bin/bash", "/app/compose/local/django/start"]
 
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    container_name: saas_local_stripe_cli
+    depends_on:
+      - django
+    env_file:
+      - ./.envs/.local/.django
+    command: listen --forward-to http://django:8000/billing/webhooks/stripe/
+
   migrations:
       <<: *django
       image: saas_local_migrations
@@ -94,10 +103,10 @@ services:
     ports: []
     command: ["/bin/bash", "/app/compose/local/django/celery/beat/start"]
 
-  flower:
-    <<: *django
-    image: saas_local_flower
-    container_name: saas_local_flower
-    ports:
-      - '5555:5555'
-    command: /start-flower
+  # flower:
+  #   <<: *django
+  #   image: saas_local_flower
+  #   container_name: saas_local_flower
+  #   ports:
+  #     - '5555:5555'
+  #   command: /start-flower

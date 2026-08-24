@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mx-auto max-w-6xl space-y-8 py-8">
+  <div class="text-center">
+    <h1 class="text-3xl font-semibold tracking-tight">Choose your plan</h1>
+    <p class="mt-2 text-muted-foreground">Choose a plan and the payment provider you prefer.</p>
+  </div>
+
+  {% if subscription %}
+    <div class="rounded-lg border p-4 text-sm">
+      You currently have <strong>{{ subscription.price.product.name }}</strong>.
+      {% if subscription.provider == "stripe" %}
+        <form method="post" action="{% url 'billing:portal' %}" class="mt-3">
+          {% csrf_token %}<c-button type="submit" variant="outline">Manage billing</c-button>
+        </form>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    {% for price, providers in cards %}
+      <c-card>
+        <c-card.header>
+          <c-card.title>{{ price.product.name }}</c-card.title>
+          <c-card.description>{{ price.product.description }}</c-card.description>
+        </c-card.header>
+        <c-card.content class="space-y-4">
+          <div class="text-3xl font-semibold">
+            {{ price.amount_decimal|floatformat:2 }} {{ price.currency|upper }}
+            {% if price.is_recurring %}<span class="text-sm font-normal text-muted-foreground">/ {{ price.interval }}</span>{% endif %}
+          </div>
+          <ul class="space-y-2 text-sm">
+            {% for product_feature in price.product.product_features.all %}
+              {% if product_feature.enabled and product_feature.feature.active %}<li>✓ {{ product_feature.feature.name }}</li>{% endif %}
+            {% empty %}<li class="text-muted-foreground">No features configured.</li>{% endfor %}
+          </ul>
+        </c-card.content>
+        <c-card.footer>
+          {% if providers %}
+            <form method="post" action="{% url 'billing:checkout' price.id %}" class="w-full space-y-3">
+              {% csrf_token %}
+              <label for="provider-{{ price.id }}" class="text-sm font-medium">Payment provider</label>
+              <select id="provider-{{ price.id }}" name="provider" class="w-full rounded-md border px-3 py-2">
+                {% for value, label in providers %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+              </select>
+              <c-button type="submit" class="w-full">Pay with selected provider</c-button>
+            </form>
+          {% else %}
+            <p class="text-sm text-muted-foreground">No payment provider is configured for this price.</p>
+          {% endif %}
+        </c-card.footer>
+      </c-card>
+    {% empty %}
+      <p class="text-muted-foreground">No active prices are configured yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock content %}

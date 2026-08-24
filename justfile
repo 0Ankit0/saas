@@ -15,9 +15,9 @@ build *args:
     @docker-compose build {{args}}
 
 # up: Start up containers.
-up:
+up *args:
     @echo "Starting up containers..."
-    @docker-compose up -d --remove-orphans
+    @docker-compose up -d --remove-orphans {{args}}
 
 # down: Stop containers.
 down:

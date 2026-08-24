@@ -92,7 +92,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 TENANT_MODEL = "tenants.Tenant"
 TENANT_DOMAIN_MODEL = "tenants.Domain"
 # https://docs.djangoproject.com/en/dev/ref/settings/#tenant-users-domain
-TENANT_USERS_DOMAIN = env("DJANGO_TENANT_USERS_DOMAIN", default="localhost:8000")
+TENANT_USERS_DOMAIN = env("DJANGO_TENANT_USERS_DOMAIN", default="localhost")
 PUBLIC_SCHEMA_URLCONF = "config.urls"
 
 TENANT_USERS_PERMS_QUERYSET = (

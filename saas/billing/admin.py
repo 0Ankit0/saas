@@ -132,6 +132,7 @@ class BillingCustomerAdmin(ModelAdmin):
         "tenant",
         "provider",
         "name",
+        "provider_customer_id",
         "email",
     )
     autocomplete_fields = [

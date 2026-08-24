@@ -179,6 +179,9 @@ def accept_invitation(
     user, created = get_or_create_user_for_invitation(
         invitation
     )
+    if created:
+        tenant = invitation.tenant
+        tenant.add_user(user)
 
     if not user.is_active:
         raise ValueError(

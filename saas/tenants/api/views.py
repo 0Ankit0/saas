@@ -4,7 +4,7 @@ from django.db.models import Prefetch
 from rest_framework import response
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, BasePermission, IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny, BasePermission, DjangoModelPermissions, IsAdminUser, IsAuthenticated
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from slugify import slugify
@@ -12,7 +12,6 @@ from tenant_users.tenants.tasks import provision_tenant
 from werkzeug.exceptions import MethodNotAllowed
 from saas.tenants.models import InvitationStatus, Tenant, Domain, Invitation
 from saas.tenants.api.serializers import TenantCreateSerializer, TenantSerializer, DomainSerializer, InvitationSerializer
-from saas.tenants.api.permissions import TenantDomainPermission
 from saas.tenants.services import create_invitation, queue_invitation_notification
 from rest_framework.response import Response
 from saas.contrib.views import HashIDModelViewSet
@@ -21,6 +20,7 @@ class TenantViewSet(HashIDModelViewSet):
     queryset = Tenant.objects.all()
     serializer_class = TenantSerializer
     lookup_field = "ukid"
+    permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -59,7 +59,7 @@ class TenantViewSet(HashIDModelViewSet):
 class DomainViewSet(HashIDModelViewSet):
     queryset = Domain.objects.all()
     serializer_class = DomainSerializer
-    permission_classes = [TenantDomainPermission]
+    permission_classes = [DjangoModelPermissions]
 
 
     def create(self, request, *args, **kwargs):
