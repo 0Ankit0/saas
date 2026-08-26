@@ -19,7 +19,7 @@ from .services.stripe import (
     create_stripe_price,
     create_stripe_product,
 )
-from .services.webhooks import process_webhook
+from .services.stripe_webhooks import process_webhook
 
 logger = logging.getLogger(__name__)
 

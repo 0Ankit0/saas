@@ -346,6 +346,10 @@ class BillingCustomer(models.Model):
         auto_now=True,
     )
 
+    active = models.BooleanField(
+        default=True,
+    )
+
     updated_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -357,13 +361,8 @@ class BillingCustomer(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=[
-                    "tenant",
-                    "provider",
-                ],
-                name=(
-                    "billing_customer_tenant_provider_unique"
-                ),
+                fields=["tenant", "active"],
+                name="billing_customer_single_active_per_tenant",
             ),
             models.UniqueConstraint(
                 fields=[

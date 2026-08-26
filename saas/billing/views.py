@@ -15,6 +15,9 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
+from saas.billing.services.payment import mark_checkout_failed
+from saas.billing.services.providers import validate_esewa_transaction
+
 from .models import (
     CheckoutSession,
     Payment,
@@ -500,135 +503,155 @@ def success(
 # Khalti callback
 # ============================================================
 
-@csrf_exempt
 @require_GET
+@csrf_exempt
 def khalti_callback(
     request: HttpRequest,
 ) -> HttpResponse:
 
-    pidx = request.GET.get(
-        "pidx",
-        "",
-    )
+    pidx = str(
+        request.GET.get(
+            "pidx",
+            "",
+        )
+    ).strip()
 
     if not pidx:
         messages.error(
             request,
-            "No Khalti payment reference was received.",
+            "Invalid Khalti payment response.",
         )
 
         return redirect(
-            "billing:dashboard"
+            "billing:pricing"
         )
 
     try:
 
-        session = get_object_or_404(
+        checkout = get_object_or_404(
             CheckoutSession,
             provider=Provider.KHALTI,
             provider_session_id=pidx,
         )
 
+        # ----------------------------------------------------
+        # Always lookup with Khalti.
+        # ----------------------------------------------------
+
         result = khalti_lookup(
             pidx
         )
 
-        if (
-            result.get("purchase_order_id")
-            != session.metadata.get(
-                "purchase_order_id"
+        status = str(
+            result.get(
+                "status",
+                "",
             )
-        ):
+        ).lower()
+
+        # ----------------------------------------------------
+        # Canceled / failed / pending
+        # ----------------------------------------------------
+
+        if status != "completed":
+
+            mark_checkout_failed(
+                checkout,
+                reason=(
+                    f"Khalti status: {status}"
+                ),
+            )
+
+            if status == "pending":
+                messages.info(
+                    request,
+                    "Your Khalti payment is "
+                    "still pending.",
+                )
+            else:
+                messages.error(
+                    request,
+                    "The Khalti payment was not "
+                    "completed.",
+                )
+
+            return redirect(
+                "billing:pricing"
+            )
+
+        # ----------------------------------------------------
+        # Verify amount.
+        # ----------------------------------------------------
+
+        paid_amount = int(
+            result.get(
+                "total_amount",
+                0,
+            )
+        )
+
+        if paid_amount != checkout.price.amount:
             raise ValueError(
-                "Khalti payment does not match "
-                "the checkout order."
+                "Khalti payment amount does not "
+                "match the checkout price."
             )
 
-        verified = (
-            result.get("status") == "Completed"
-            and int(
-                result.get("total_amount")
-                or 0
+        # ----------------------------------------------------
+        # Finalize.
+        # ----------------------------------------------------
+
+        transaction_id = str(
+            result.get(
+                "transaction_id",
+                "",
             )
-            == session.price.amount
         )
 
-        payment_id = str(
-            result.get("transaction_id")
-            or pidx
+        if not transaction_id:
+            raise ValueError(
+                "Khalti did not return a "
+                "transaction ID."
+            )
+
+        finalize_one_time_payment(
+            checkout,
+            provider_payment_id=(
+                f"khalti:{transaction_id}"
+            ),
+            amount=(
+                checkout.price.amount
+            ),
+            currency=(
+                checkout.price.currency
+            ),
+            provider_response=result,
         )
 
-        Payment.objects.update_or_create(
-            provider=Provider.KHALTI,
-            provider_payment_id=payment_id,
-            defaults={
-                "tenant": session.tenant,
-                "amount": session.price.amount,
-                "currency": "NPR",
-                "status": (
-                    Payment.Status.SUCCEEDED
-                    if verified
-                    else Payment.Status.FAILED
-                ),
-                "paid_at": (
-                    timezone.now()
-                    if verified
-                    else None
-                ),
-                "metadata": {
-                    "pidx": pidx,
-                    "status": result.get(
-                        "status"
-                    ),
-                },
-            },
+        messages.success(
+            request,
+            "Payment successful. "
+            "Your subscription is now active.",
         )
 
-        if verified:
+        return redirect(
+            "billing:success"
+        )
 
-            session.status = "complete"
-            session.completed_at = (
-                session.completed_at
-                or timezone.now()
-            )
-
-            session.save(
-                update_fields=[
-                    "status",
-                    "completed_at",
-                ]
-            )
-
-            messages.success(
-                request,
-                "Khalti payment completed successfully.",
-            )
-
-        else:
-
-            messages.error(
-                request,
-                "Khalti payment was not completed: "
-                f"{result.get('status', 'Unknown status')}.",
-            )
-
-    except Exception as exc:
+    except Exception:
 
         logger.exception(
-            "Khalti callback processing failed. "
-            "pidx=%s",
-            pidx,
+            "Khalti callback failed."
         )
 
         messages.error(
             request,
-            f"Unable to verify Khalti payment: {exc}",
+            "We could not confirm your "
+            "Khalti payment.",
         )
 
-    return redirect(
-        "billing:dashboard"
-    )
-
+        return redirect(
+            "billing:pricing"
+        )
 
 # ============================================================
 # eSewa callback
@@ -780,7 +803,244 @@ def esewa_callback(
         "billing:dashboard"
     )
 
+@require_GET
+def esewa_failure(
+    request: HttpRequest,
+) -> HttpResponse:
 
+    data_b64 = request.GET.get("data")
+
+    try:
+
+        # eSewa may send response data even on failure.
+        # We attempt to decode/verify it, but failure
+        # handling must not provision anything.
+
+        if data_b64:
+
+            try:
+                data = verify_esewa_response(
+                    data_b64
+                )
+
+                transaction_uuid = str(
+                    data.get(
+                        "transaction_uuid",
+                        "",
+                    )
+                )
+
+            except Exception:
+                logger.warning(
+                    "Could not verify eSewa "
+                    "failure callback.",
+                    exc_info=True,
+                )
+
+                transaction_uuid = ""
+
+            if transaction_uuid:
+
+                checkout = (
+                    CheckoutSession.objects
+                    .filter(
+                        provider=Provider.ESEWA,
+                        provider_session_id=(
+                            transaction_uuid
+                        ),
+                    )
+                    .first()
+                )
+
+                if checkout:
+                    mark_checkout_failed(
+                        checkout,
+                        reason=(
+                            "Customer/payment "
+                            "was not completed."
+                        ),
+                    )
+
+    except Exception:
+        logger.exception(
+            "eSewa failure callback failed."
+        )
+
+    messages.info(
+        request,
+        "The eSewa payment was cancelled "
+        "or did not complete.",
+    )
+
+    return redirect(
+        "billing:pricing"
+    )
+
+@require_GET
+def esewa_success(
+    request: HttpRequest,
+) -> HttpResponse:
+
+    data_b64 = request.GET.get("data")
+
+    try:
+
+        # ----------------------------------------------------
+        # 1. Verify eSewa's cryptographic signature.
+        # ----------------------------------------------------
+
+        data = verify_esewa_response(
+            data_b64
+        )
+
+        transaction_uuid = str(
+            data.get(
+                "transaction_uuid",
+                "",
+            )
+        )
+
+        if not transaction_uuid:
+            raise ValueError(
+                "Missing eSewa transaction UUID."
+            )
+
+        # ----------------------------------------------------
+        # 2. Find our checkout.
+        # ----------------------------------------------------
+
+        checkout = get_object_or_404(
+            CheckoutSession,
+            provider=Provider.ESEWA,
+            provider_session_id=(
+                transaction_uuid
+            ),
+        )
+
+        # ----------------------------------------------------
+        # 3. Validate callback against our DB.
+        # ----------------------------------------------------
+
+        validate_esewa_transaction(
+            data,
+            transaction_uuid=(
+                transaction_uuid
+            ),
+            expected_amount=(
+                checkout.price.amount
+            ),
+            product_code=(
+                checkout.metadata.get(
+                    "product_code"
+                )
+            ),
+        )
+
+        # ----------------------------------------------------
+        # 4. Ask eSewa directly.
+        #
+        # Never provision solely because the browser
+        # returned with status=COMPLETE.
+        # ----------------------------------------------------
+
+        status_response = esewa_status(
+            transaction_uuid=(
+                transaction_uuid
+            ),
+            total_amount=(
+                checkout.metadata[
+                    "total_amount"
+                ]
+            ),
+        )
+
+        status = str(
+            status_response.get(
+                "status",
+                "",
+            )
+        ).upper()
+
+        if status != "COMPLETE":
+            mark_checkout_failed(
+                checkout,
+                reason=(
+                    "eSewa status was "
+                    f"{status}"
+                ),
+            )
+
+            messages.error(
+                request,
+                "The eSewa payment could not "
+                "be confirmed.",
+            )
+
+            return redirect(
+                "billing:pricing"
+            )
+
+        # ----------------------------------------------------
+        # 5. Finalize.
+        # ----------------------------------------------------
+
+        ref_id = (
+            status_response.get(
+                "refId"
+            )
+            or status_response.get(
+                "ref_id"
+            )
+            or data.get(
+                "transaction_code"
+            )
+            or transaction_uuid
+        )
+
+        finalize_one_time_payment(
+            checkout,
+            provider_payment_id=(
+                f"esewa:{ref_id}"
+            ),
+            amount=(
+                checkout.price.amount
+            ),
+            currency=(
+                checkout.price.currency
+            ),
+            provider_response={
+                "callback": data,
+                "status": status_response,
+            },
+        )
+
+        messages.success(
+            request,
+            "Payment successful. "
+            "Your subscription is now active.",
+        )
+
+        return redirect(
+            "billing:success"
+        )
+
+    except Exception as exc:
+
+        logger.exception(
+            "eSewa success callback failed."
+        )
+
+        messages.error(
+            request,
+            "We could not confirm your "
+            "eSewa payment.",
+        )
+
+        return redirect(
+            "billing:pricing"
+        )
+
+    
 # ============================================================
 # Stripe Webhook
 # ============================================================
