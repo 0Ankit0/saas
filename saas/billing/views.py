@@ -26,7 +26,7 @@ from .models import (
     Provider,
     WebhookEvent,
 )
-from .providers import (
+from saas.billing.services.providers import (
     create_esewa_checkout,
     create_khalti_checkout,
     esewa_status,

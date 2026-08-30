@@ -3,6 +3,7 @@ volumes:
   saas_local_postgres_data_backups: {}
   saas_local_python_venv: {}
   saas_local_redis_data: {}
+  django_template_local_floci_data: {}
 
 services:
   django: &django
@@ -14,12 +15,24 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
+      floci:
+        condition: service_healthy
+      aws-init:
+        condition: service_completed_successfully
     volumes:
       - saas_local_python_venv:/app/.venv
       - .:/app:z
     env_file:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
+    environment:
+      AWS_ENDPOINT_URL: http://floci:4566
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      DJANGO_AWS_S3_REGION_NAME: us-east-1
+      DJANGO_AWS_STORAGE_BUCKET_NAME: django-template-media
+      AWS_AVATAR_LAMBDA_FUNCTION_NAME: django-template-avatar-processor
     ports:
       - '8000:8000'
     command: ["/bin/bash", "/app/compose/local/django/start"]
@@ -40,6 +53,10 @@ services:
       depends_on:
         postgres:
           condition: service_healthy
+        floci:
+          condition: service_healthy
+        aws-init:
+          condition: service_completed_successfully
       ports: []
       command: ["/bin/bash", "/app/compose/local/django/start-migrations"]
 
@@ -82,6 +99,50 @@ services:
     container_name: saas_local_redis
     volumes:
       - saas_local_redis_data:/data
+
+  floci:
+    image: floci/floci:latest
+    container_name: django_template_local_floci
+    environment:
+      FLOCI_HOSTNAME: floci
+      FLOCI_STORAGE_MODE: persistent
+      FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ENABLED: "true"
+      FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ALLOWED_PATHS: "${PWD}/infra/aws/avatar_processor"
+    volumes:
+      - django_template_local_floci_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "4566:4566"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    
+  aws-init:
+    image: floci/floci:latest-compat
+    container_name: django_template_local_aws_init
+    depends_on:
+      floci:
+        condition: service_healthy
+    volumes:
+      - ${PWD}/infra/aws/avatar_processor:/lambda_code
+    environment:
+      AWS_ENDPOINT_URL: http://floci:4566
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      FLOCI_AVATAR_LAMBDA_PATH: /lambda_code
+      FLOCI_AVATAR_LAMBDA_HOST_PATH: ${PWD}/infra/aws/avatar_processor
+    command: >-
+      sh -c "until aws --endpoint-url http://floci:4566 sts get-caller-identity >/dev/null 2>&1; do sleep 1; done;
+      python -m pip install --disable-pip-version-check --no-cache-dir -r /lambda_code/requirements.txt -t /lambda_code/vendor >/dev/null;
+      aws --endpoint-url http://floci:4566 s3api head-bucket --bucket django-template-media >/dev/null 2>&1 ||
+      aws --endpoint-url http://floci:4566 s3api create-bucket --bucket django-template-media;
+      aws --endpoint-url http://floci:4566 lambda get-function --function-name django-template-avatar-processor >/dev/null 2>&1 ||
+      aws --endpoint-url http://floci:4566 lambda create-function --function-name django-template-avatar-processor --runtime python3.12 --role arn:aws:iam::000000000000:role/lambda-role --handler lambda_function.lambda_handler --code S3Bucket=hot-reload,S3Key=$${FLOCI_AVATAR_LAMBDA_HOST_PATH}; exit 0"
+    restart: "no"
 
   celeryworker:
     <<: *django

@@ -39,6 +39,55 @@ class TenantAdmin(TenantAdminMixin, ModelAdmin):
         "owner",
     )
 
+    def has_create_permission(self, request):
+        if not request.tenant.schema_name == "public" and not request.user.is_superuser and not request.user.is_staff:
+            return False
+        return request.user.is_superuser or request.user.is_staff
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+
+        if request.tenant.schema_name != "public":
+            return qs.filter(pk=request.tenant.pk)
+
+        return qs
+
+    def save_model(
+        self,
+        request,
+        obj,
+        form,
+        change,
+    ):
+        super().save_model(
+            request,
+            obj,
+            form,
+            change,
+        )
+        try:
+            if not obj.user_set.filter(pk=request.user.pk).exists():
+                obj.add_user(
+                    request.user,
+                    is_superuser=True,
+                    is_staff=True,
+                )
+        except Exception as exc:
+            self.message_user(
+                request,
+                _(
+                    "Could not add %(user)s as a superuser "
+                    "to %(tenant)s: %(error)s"
+                )
+                % {
+                    "user": request.user,
+                    "tenant": obj,
+                    "error": exc,
+                },
+                level=messages.ERROR,
+            )
+            raise
+
 
 @admin.register(Domain)
 class DomainAdmin(ModelAdmin):
@@ -53,6 +102,20 @@ class DomainAdmin(ModelAdmin):
         "tenant__name",
         "tenant__schema_name",
     ]
+
+
+    def has_create_permission(self, request):
+        if not request.tenant.schema_name == "public" and not request.user.is_superuser and not request.user.is_staff:
+            return False
+        return request.user.is_superuser or request.user.is_staff
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+
+        if request.tenant.schema_name != "public":
+            return qs.filter(tenant=request.tenant)
+
+        return qs
 
 
 @admin.register(Invitation)

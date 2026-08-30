@@ -487,3 +487,9 @@ ENABLE_ESEWA = env.bool("ENABLE_ESEWA", default=True)
 ESEWA_PRODUCT_CODE=env.str("ESEWA_PRODUCT_CODE", default="EPAYTEST")
 ESEWA_SECRET_KEY=env("ESEWA_SECRET_KEY", default="8gBm/:&EnhH.1/q")
 ESEWA_BASE_URL = env.str("ESEWA_BASE_URL", default="https://uat.esewa.com.np/epay/main/v2/form")
+
+# AWS
+# ------------------------------------------------------------------------------
+AWS_S3_LOCATION = env.str("DJANGO_AWS_S3_LOCATION", default="media")
+AWS_AVATAR_LAMBDA_FUNCTION_NAME = env.str("AWS_AVATAR_LAMBDA_FUNCTION_NAME", default="django-template-avatar-processor")
+
